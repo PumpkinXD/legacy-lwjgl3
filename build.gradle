@@ -1,3 +1,5 @@
+import net.fabricmc.loom.task.RemapJarTask
+
 plugins {
     id 'fabric-loom' version "1.2.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
@@ -105,11 +107,14 @@ shadowJar {
     }
 }
 
-task remapShadowJar(type: net.fabricmc.loom.task.RemapJarTask, dependsOn: shadowJar) {
+tasks.register('remapShadowJar', RemapJarTask) {
+    dependsOn shadowJar
     input = shadowJar.archiveFile
     archiveFileName = "${archivesBaseName}-${project.version}-all-remapped.jar"
     addNestedDependencies = false
 }
+
+tasks.build.dependsOn remapShadowJar
 
 // configure the maven publication
 publishing {
