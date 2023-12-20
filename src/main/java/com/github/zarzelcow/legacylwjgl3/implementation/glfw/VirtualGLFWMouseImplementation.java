@@ -12,8 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.github.zarzelcow.legacylwjgl3.implementation.input.MouseImplementation;
@@ -61,8 +61,10 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private double last_y;
 	private double accum_dx, accum_dy, accum_dz;
 	private double virt_offset_x, virt_offset_y;
-	private XCursor.ImageChunk cursor;
-	private int image = -1;
+	private XCursor cursor;
+	private int current;
+	private int[] images = new int[]{-1};
+	private long animationTime;
 	private boolean virtual;
 	private boolean created;
 
@@ -198,9 +200,11 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		this.posCallback.free();
 		this.scrollCallback.free();
 		this.cursorEnterCallback.free();
-		if (image != 0) {
-			GlStateManager.deleteTexture(image);
-			image = -1;
+		if (images[0] != 0) {
+			for (int i : images) {
+				GlStateManager.deleteTexture(i);
+			}
+			images = new int[]{-1};
 		}
 	}
 
@@ -269,36 +273,60 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	}
 
 	private void draw() {
-		if (virtual && image != 0) {
+		if (virtual && images[0] != 0) {
 			GlStateManager.enableTexture();
 			GlStateManager.enableAlphaTest();
 			GlStateManager.enableBlend();
 			GlStateManager.color3f(1, 1, 1);
-			GlStateManager.bindTexture(image);
+			GlStateManager.bindTexture(images[current]);
 
 			float scale = new Window(MinecraftClient.getInstance()).getScaleFactor();
 			double x = getX();
 			double y = getY();
-			drawTexture((x - cursor.xhot) / scale, (Display.getHeight() - y - cursor.yhot) / scale, 0, 0, cursor.width / scale, cursor.height / scale, cursor.width / scale, cursor.height / scale);
+			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, 0, 0, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);
+
+			advanceAnimation();
 		}
 	}
 
-	private void loadCursor() {
-		XCursor cursor = SystemCursor.load();
-
-		if (Boolean.getBoolean("virtual_mouse.export")){
-			cursor.export();
+	private void advanceAnimation() {
+		if (animationTime == 0 || System.currentTimeMillis() - animationTime > getCurrent().delay) {
+			animationTime = System.currentTimeMillis();
+			current++;
+			if (current >= images.length) {
+				current = 0;
+			}
 		}
+	}
 
-		Arrays.stream(cursor.getChunks()).filter(c -> c instanceof XCursor.ImageChunk)
-				.map(c -> (XCursor.ImageChunk) c)
-				.filter(c -> c.getSubtype() == XDGPathResolver.getCursorSize()).findFirst().ifPresent(c -> {
-					int glId = TextureUtil.getTexLevelParameter();
-					image = glId;
-					TextureUtil.prepareImage(glId, (int) c.width, (int) c.height);
-					TextureUtil.method_5861(glId, c.getImage(), (int) c.width, (int) c.height);
-					VirtualGLFWMouseImplementation.this.cursor = c;
-				});
+	private XCursor.ImageChunk getCurrent() {
+		return (XCursor.ImageChunk) cursor.chunks[current];
+	}
+
+	private void loadCursor() {
+		cursor = SystemCursor.load();
+
+		//if (Boolean.getBoolean("virtual_mouse.export")) {
+		cursor.export();
+		//}
+
+		List<Integer> glIds = new ArrayList<>();
+		for (XCursor.Chunk chunk : cursor.chunks) {
+			if (chunk instanceof XCursor.ImageChunk) {
+				XCursor.ImageChunk c = (XCursor.ImageChunk) chunk;
+				if (c.getSubtype() == XDGPathResolver.getCursorSize()) {
+					int id = TextureUtil.getTexLevelParameter();
+					glIds.add(id);
+					TextureUtil.prepareImage(id, (int) c.width, (int) c.height);
+					TextureUtil.method_5861(id, c.getImage(), (int) c.width, (int) c.height);
+				}
+			}
+		}
+		current = 0;
+		images = new int[glIds.size()];
+		for (int i = 0; i < images.length; i++) {
+			images[i] = glIds.get(i);
+		}
 	}
 
 	private double getX() {
@@ -503,8 +531,17 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			return new String(data, StandardCharsets.UTF_8);
 		}
 
-		public void export(){
-			for (Chunk c: chunks){
+		public void export() {
+
+			Path dir = Paths.get("cursors");
+			try {
+				Files.deleteIfExists(dir);
+				Files.createDirectory(dir);
+			} catch (IOException e) {
+				LOGGER.warn("Failed to create clean export directory, export will likely fail!", e);
+			}
+
+			for (Chunk c : chunks) {
 				c.export();
 			}
 		}
@@ -565,7 +602,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				}
 
 				try {
-					Files.write(Paths.get("cursors", name), comment.getBytes(StandardCharsets.UTF_8));
+					Files.write(Paths.get("cursors", name), comment.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
 				}
@@ -633,15 +670,16 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 				String cursor = (getSubtype() + " " + xhot + " " + yhot + " " + getSubtype() + "x" + getSubtype() + ".png");
 
+				String imageName = getSubtype() + "x" + getSubtype();
 				if (delay != 0) {
 					cursor += " " + delay;
+					imageName += "_" + delay;
 				}
 
-
 				try {
-					ImageIO.write(im, "png", new File(getSubtype() + "x" + getSubtype() + ".png"));
-					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".txt"), lines);
-					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"), cursor.getBytes(StandardCharsets.UTF_8));
+					ImageIO.write(im, "png", new File("cursors", imageName + ".png"));
+					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".txt"), lines, StandardOpenOption.CREATE);
+					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"), cursor.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
 				}
