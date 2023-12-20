@@ -1,5 +1,8 @@
 package com.github.zarzelcow.legacylwjgl3.implementation.glfw;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -8,7 +11,10 @@ import java.nio.DoubleBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.github.zarzelcow.legacylwjgl3.implementation.input.MouseImplementation;
 import com.github.zarzelcow.legacylwjgl3.util.XDGPathResolver;
@@ -265,6 +271,8 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private void draw() {
 		if (virtual && image != 0) {
 			GlStateManager.enableTexture();
+			GlStateManager.enableAlphaTest();
+			GlStateManager.enableBlend();
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(image);
 
@@ -277,6 +285,10 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 	private void loadCursor() {
 		XCursor cursor = SystemCursor.load();
+
+		if (Boolean.getBoolean("virtual_mouse.export")){
+			cursor.export();
+		}
 
 		Arrays.stream(cursor.getChunks()).filter(c -> c instanceof XCursor.ImageChunk)
 				.map(c -> (XCursor.ImageChunk) c)
@@ -319,7 +331,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		public InputStream getArrowCursor() throws IOException {
 			Path theme = XDGPathResolver.getIconTheme("cursors/left_ptr");
 			if (theme != null) {
-				LOGGER.info("Using system cursor theme: " + theme);
+				LOGGER.info("Loading system cursor: " + theme);
 				return Files.newInputStream(theme);
 			}
 
@@ -491,6 +503,12 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			return new String(data, StandardCharsets.UTF_8);
 		}
 
+		public void export(){
+			for (Chunk c: chunks){
+				c.export();
+			}
+		}
+
 		@Data
 		private static class TableOfContents {
 			private final long type;
@@ -510,6 +528,8 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				this.subtype = subtype;
 				this.version = version;
 			}
+
+			public abstract void export();
 		}
 
 		/*
@@ -531,6 +551,25 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				super(length, type, subtype, version);
 				this.length = commentLength;
 				this.comment = comment;
+			}
+
+			public void export() {
+
+				String name;
+				if (getSubtype() == 1) {
+					name = "COPYRIGHT";
+				} else if (getSubtype() == 2) {
+					name = "LICENSE";
+				} else {
+					name = "COMMENT";
+				}
+
+				try {
+					Files.write(Paths.get("cursors", name), comment.getBytes(StandardCharsets.UTF_8));
+				} catch (IOException e) {
+					LOGGER.warn("Image export failed!", e);
+				}
+
 			}
 		}
 
@@ -569,6 +608,43 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				}
 
 				return data;
+			}
+
+			public void export() {
+
+				BufferedImage im = new BufferedImage((int) width, (int) height, BufferedImage.TYPE_INT_ARGB);
+
+				int[] data = getImage();
+
+				for (int i = 0; i < data.length; i++) {
+					im.setRGB((int) (i % width), (int) (i / height), data[i]);
+				}
+
+
+				List<String> lines = new ArrayList<>();
+				lines.add("[Sizes]");
+				lines.add("Cursor: " + getSubtype() + "x" + getSubtype());
+				lines.add("Image: " + width + "x" + height);
+				lines.add("[Hotspots]");
+				lines.add("X: " + xhot);
+				lines.add("Y: " + yhot);
+				lines.add("[Delay]");
+				lines.add("" + delay);
+
+				String cursor = (getSubtype() + " " + xhot + " " + yhot + " " + getSubtype() + "x" + getSubtype() + ".png");
+
+				if (delay != 0) {
+					cursor += " " + delay;
+				}
+
+
+				try {
+					ImageIO.write(im, "png", new File(getSubtype() + "x" + getSubtype() + ".png"));
+					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".txt"), lines);
+					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"), cursor.getBytes(StandardCharsets.UTF_8));
+				} catch (IOException e) {
+					LOGGER.warn("Image export failed!", e);
+				}
 			}
 		}
 
