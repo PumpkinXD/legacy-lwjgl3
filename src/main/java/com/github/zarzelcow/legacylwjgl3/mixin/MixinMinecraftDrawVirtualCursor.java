@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftClient.class)
 public class MixinMinecraftDrawVirtualCursor {
-
-	@Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/AchievementNotification;tick()V"))
+	
+@Inject(method = "runGameLoop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/Framebuffer;endWrite()V"))
 	private void drawVirtualCursor(CallbackInfo ci) {
 		VirtualGLFWMouseImplementation.render();
 	}
