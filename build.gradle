@@ -35,7 +35,7 @@ loom {
     // }
 }
 
-project.ext.lwjglVersion = "3.3.2"
+project.ext.lwjglVersion = "3.3.4"
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -86,7 +86,7 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+        rename { "${it}_${project.base.archivesName.get()}" }
     }
 }
 
