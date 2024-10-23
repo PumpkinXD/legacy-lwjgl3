@@ -1,6 +1,6 @@
 package com.github.zarzelcow.legacylwjgl3.mixin;
 
-import com.github.zarzelcow.legacylwjgl3.implementation.glfw.VirtualGLFWMouseImplementation;
+import io.github.moehreag.legacylwjgl3.implementation.glfw.VirtualGLFWMouseImplementation;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

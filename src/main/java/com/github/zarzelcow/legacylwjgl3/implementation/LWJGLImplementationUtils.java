@@ -2,7 +2,7 @@ package com.github.zarzelcow.legacylwjgl3.implementation;
 
 import com.github.zarzelcow.legacylwjgl3.implementation.glfw.GLFWKeyboardImplementation;
 import com.github.zarzelcow.legacylwjgl3.implementation.glfw.GLFWMouseImplementation;
-import com.github.zarzelcow.legacylwjgl3.implementation.glfw.VirtualGLFWMouseImplementation;
+import io.github.moehreag.legacylwjgl3.implementation.glfw.VirtualGLFWMouseImplementation;
 import com.github.zarzelcow.legacylwjgl3.implementation.input.*;
 import org.lwjgl.glfw.GLFW;
 
