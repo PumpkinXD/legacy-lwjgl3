@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.github.zarzelcow.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.math.MathHelper;
