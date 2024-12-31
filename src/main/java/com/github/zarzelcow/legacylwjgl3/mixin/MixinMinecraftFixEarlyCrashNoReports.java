@@ -3,7 +3,7 @@ package com.github.zarzelcow.legacylwjgl3.mixin;
 import com.mojang.blaze3d.platform.GLX;
 import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.crash.CrashReport;
