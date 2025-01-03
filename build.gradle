@@ -1,7 +1,7 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version "1.8.+"
+    id 'fabric-loom' version "1.9.+"
     id 'com.gradleup.shadow' version '8.+'
     id 'io.freefair.lombok' version "8.+"
     id 'maven-publish'
@@ -113,8 +113,8 @@ shadowJar {
 
 tasks.register('remapShadowJar', RemapJarTask) {
     dependsOn shadowJar
-    input = shadowJar.archiveFile
-    archiveFileName = "${archivesBaseName}-${project.version}-all-remapped.jar"
+    inputFile = shadowJar.archiveFile
+    setArchiveClassifier("all-remapped")
     addNestedDependencies = false
 }
 
