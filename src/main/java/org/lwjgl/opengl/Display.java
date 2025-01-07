@@ -181,8 +181,10 @@ public final class Display {
 
 			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, 0);
 			GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
+			io.github.pumpkinxd.legacylwjgl3.compatibility.workarounds.nvidia.NvidiaWorkarounds.applyEnvironmentChanges();// https://github.com/CaffeineMC/sodium/blob/3af8680fd14e4c8bd8f8f5eadf711ca20ce980cb/common/src/main/java/net/caffeinemc/mods/sodium/mixin/workarounds/context_creation/WindowMixin.java#L44
 			handle =
 					GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
+			//TODO: (windows only) //NvidiaWorkarounds.undoEnvironmentChanges();
 			width = displayMode.getWidth();
 			height = displayMode.getHeight();
 			GLFW.glfwMakeContextCurrent(handle);
