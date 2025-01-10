@@ -24,7 +24,7 @@ public class LWJGLImplementationUtils {
     private static InputImplementation createImplementation() {
         MouseImplementation mouse = allowVirtualCursor && GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND ?
                 VirtualGLFWMouseImplementation.getInstance() :
-                new GLFWMouseImplementation();
+                new io.github.pumpkinxd.legacylwjgl3.implementation.glfw.GLFWMouseImplementation();
         return new CombinedInputImplementation(new GLFWKeyboardImplementation(), mouse);
     }
 
