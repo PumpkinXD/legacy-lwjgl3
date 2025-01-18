@@ -58,7 +58,6 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
     }
 
-
 }
 
 configurations.configureEach {
