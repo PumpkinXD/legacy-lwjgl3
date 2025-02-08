@@ -1,5 +1,6 @@
 package io.github.pumpkinxd.legacylwjgl3.compatibility.environment.probe;
 
+import io.github.pumpkinxd.legacylwjgl3.platform.windows.api.d3dkmt.D3DKMT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.apache.logging.log4j.LogManager;
@@ -63,10 +64,9 @@ public class GraphicsAdapterProbe {
 
         ADAPTERS = adapters;
     }
-//TODO:port D3DKMT
+
     private static List<? extends GraphicsAdapterInfo> findAdapters$Windows() {
-//        return D3DKMT.findGraphicsAdapters();
-        return null;
+        return D3DKMT.findGraphicsAdapters();
     }
 
     // We rely on separate detection logic for Linux because Oshi fails to find GPUs without

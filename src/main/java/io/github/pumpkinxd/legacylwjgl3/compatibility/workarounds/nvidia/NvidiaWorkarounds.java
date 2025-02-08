@@ -6,6 +6,8 @@ import io.github.pumpkinxd.legacylwjgl3.compatibility.environment.probe.Graphics
 import io.github.pumpkinxd.legacylwjgl3.compatibility.environment.probe.GraphicsAdapterVendor;
 import io.github.pumpkinxd.legacylwjgl3.platform.unix.LibC;
 import io.github.pumpkinxd.legacylwjgl3.platform.windows.WindowsCommandLine;
+import io.github.pumpkinxd.legacylwjgl3.platform.windows.WindowsFileVersion;
+import io.github.pumpkinxd.legacylwjgl3.platform.windows.api.d3dkmt.D3DKMT;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -30,34 +32,38 @@ public class NvidiaWorkarounds {
                 .anyMatch(adapter -> adapter.vendor() == GraphicsAdapterVendor.NVIDIA);
     }
 
-    //TODO:Port WindowsFileVersion && D3DKMT
-//    public static @Nullable WindowsFileVersion findNvidiaDriverMatchingBug1486() {
-//        // The Linux driver has two separate branches which have overlapping version numbers, despite also having
-//        // different feature sets. As a result, we can't reliably determine which Linux drivers are broken...
-//        if (Platform.get()!=Platform.WINDOWS) {
-//            return null;
-//        }
-//
-//        for (var adapter : GraphicsAdapterProbe.getAdapters()) {
-//            if (adapter.vendor() != GraphicsAdapterVendor.NVIDIA) {
-//                continue;
-//            }
-//
-//            if (adapter instanceof D3DKMT.WDDMAdapterInfo wddmAdapterInfo) {
-//                var driverVersion = wddmAdapterInfo.openglIcdVersion();
-//
-//                if (driverVersion.z() == 15) { // Only match 5XX.XX drivers
-//                    // Broken in x.y.15.2647 (526.47)
-//                    // Fixed in x.y.15.3623 (536.23)
-//                    if (driverVersion.w() >= 2647 && driverVersion.w() < 3623) {
-//                        return driverVersion;
-//                    }
-//                }
-//            }
-//        }
-//
-//        return null;
-//    }
+
+
+    // The way which NVIDIA tries to detect the Minecraft process could not be circumvented until fairly recently
+    // So we require that an up-to-date graphics driver is installed so that our workarounds can disable the Threaded
+    // Optimizations driver hack.
+    public static @Nullable WindowsFileVersion findNvidiaDriverMatchingBug1486() {
+        // The Linux driver has two separate branches which have overlapping version numbers, despite also having
+        // different feature sets. As a result, we can't reliably determine which Linux drivers are broken...
+        if (Platform.get()!=Platform.WINDOWS) {
+            return null;
+        }
+
+        for (var adapter : GraphicsAdapterProbe.getAdapters()) {
+            if (adapter.vendor() != GraphicsAdapterVendor.NVIDIA) {
+                continue;
+            }
+
+            if (adapter instanceof D3DKMT.WDDMAdapterInfo wddmAdapterInfo) {
+                var driverVersion = wddmAdapterInfo.openglIcdVersion();
+
+                if (driverVersion.z() == 15) { // Only match 5XX.XX drivers
+                    // Broken in x.y.15.2647 (526.47)
+                    // Fixed in x.y.15.3623 (536.23)
+                    if (driverVersion.w() >= 2647 && driverVersion.w() < 3623) {
+                        return driverVersion;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
 
 
     public static void applyEnvironmentChanges() {
@@ -92,7 +98,7 @@ public class NvidiaWorkarounds {
         // make sure that it detects the game so that *some* important optimizations are applied. Later,
         // we will try to enable GL_DEBUG_OUTPUT_SYNCHRONOUS so that "Threaded Optimizations" cannot
         // be enabled.
-//        WindowsCommandLine.setCommandLine("net.caffeinemc.sodium / net.minecraft.client.main.Main /"); //I made this NOOP for now(not finished)
+        WindowsCommandLine.setCommandLine("net.caffeinemc.sodium / net.minecraft.client.main.Main /"); //I made this NOOP for now(not finished)
     }
 
     public static void undoEnvironmentChanges() {
@@ -102,7 +108,7 @@ public class NvidiaWorkarounds {
     }
 
     private static void undoEnvironmentChanges$Windows() {
-//        WindowsCommandLine.resetCommandLine();//as above
+        WindowsCommandLine.resetCommandLine();//as above
     }
 
     public static void applyContextChanges(GlContextInfo context) {
@@ -115,7 +121,7 @@ public class NvidiaWorkarounds {
 
         LOGGER.info("Modifying OpenGL context to apply workarounds for the NVIDIA graphics driver...");
 
-        if (/*Workarounds.isWorkaroundEnabled(Workarounds.Reference.NVIDIA_THREADED_OPTIMIZATIONS_BROKEN)*/false) {
+        if (/*Workarounds.isWorkaroundEnabled(Workarounds.Reference.NVIDIA_THREADED_OPTIMIZATIONS_BROKEN)*/true) {
             if (Platform.get()==Platform.WINDOWS) {
                 applyContextChanges$Windows();
             }

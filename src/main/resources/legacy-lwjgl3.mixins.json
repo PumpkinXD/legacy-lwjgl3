@@ -7,7 +7,7 @@
 	"client": [
 		"MixinMinecraftDrawVirtualCursor",
 		"MixinMinecraftFixEarlyCrashNoReports",
-    	"MixinMinecraftFixFullscreenResize",
+		"MixinMinecraftFixFullscreenResize",
 		"MixinScreenFixClipboard",
 		"MixinDisplayApplyNvidiaWorkarounds"
 	],

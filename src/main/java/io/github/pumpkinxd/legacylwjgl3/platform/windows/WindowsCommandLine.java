@@ -9,7 +9,10 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-
+/***
+ * Implementation from Sodium
+ *
+ **/
 
 public class WindowsCommandLine {
     private static CommandLineHook ACTIVE_COMMAND_LINE_HOOK;

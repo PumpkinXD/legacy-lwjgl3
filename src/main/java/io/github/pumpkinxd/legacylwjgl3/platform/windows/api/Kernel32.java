@@ -5,6 +5,12 @@ import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import org.lwjgl.system.Platform;
 
+
+/**
+ * JNA version of
+ * <a href="https://github.com/CaffeineMC/sodium/blob/3af8680fd14e4c8bd8f8f5eadf711ca20ce980cb/common/src/workarounds/java/net/caffeinemc/mods/sodium/client/platform/windows/api/Kernel32.java">...</a>
+ */
+
 public interface Kernel32 {
     static final int MAX_PATH = 32767;
 
